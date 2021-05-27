@@ -229,7 +229,16 @@
     var video_width = 300;
     var video_height = 400;
 
-    var socket = new WebSocket('ws://localhost:8099/websocket');
+    var socket
+    
+    try{    
+    var ws = new WebSocket("wss://www.krishnovate.tech:12345/echo");
+    // var ws = new WebSocket("wss://www.asypher.tech:12345/echo");
+    }
+    catch
+    {
+        new WebSocket('ws://localhost:8099/websocket')
+    }
     function isMobile() {
         const isAndroid = /Android/i.test(navigator.userAgent);
         const isiOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
