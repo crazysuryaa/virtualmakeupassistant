@@ -56,9 +56,9 @@ def applyfilteronimage(image,keypoints,opacity,color,width,height,partsdic):
             # alpha = 0.8
             # img1[mask != 0] = img2[mask != 0] * (1-alpha) + alpha * img1[mask != 0]
     #img1 = cv2.flip(img1,1)
-    mask = cv2.flip(mask,1)
+    # mask = cv2.flip(mask,1)
     img1 = cv2.addWeighted(img1, 1, mask, 0.4, 0)
-    img1 = cv2.flip(img1,1)
+    # img1 = cv2.flip(img1,1)
     buffer = BytesIO()
     # img = Image.fromarray(mask)
     img = Image.fromarray(img1)

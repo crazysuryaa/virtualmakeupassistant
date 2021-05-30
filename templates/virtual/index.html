@@ -321,7 +321,7 @@
             }
             if (selectedcolorcode != "none") {
                 // if (imagereceived != 0) {
-                    ctx.drawImage(
+                    draw_context.drawImage(
                         video, 0, 0, videoWidth, videoHeight, 0, 0, canvas.width, canvas.height);
                 // }
                 if (predictions.length > 0) {
@@ -359,7 +359,7 @@
                         }
                         var t1 = "on send"
                         // console.time(t1)
-                        data = canvas.toDataURL('image/jpeg', 0.5)
+                        data = draw_canvas.toDataURL('image/jpeg', 0.5)
                         // ctx.drawImage(image, 0, 0, video_width, video_height);
                         console.time(t1)
                         sendMessage(JSON.stringify({
