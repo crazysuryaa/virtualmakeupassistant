@@ -17,6 +17,10 @@ import ssl
 define("port", default=12345, help="run on the given port", type=int)
 partcolorsdic = {'Crease': 'none', 'LowerLashline': 'none', 'EyeBrows': 'none', 'LipStick': 'none'}
 class MainHandler(tornado.websocket.WebSocketHandler):
+    @classmethod
+    def route_urls(cls):
+        return [(r'/echo',cls, {}),]
+
     def check_origin(self, origin):
         return True
 
@@ -43,7 +47,7 @@ class MainHandler(tornado.websocket.WebSocketHandler):
         mask = applyfilteronimage(rgbimage,mess["keypoints"],opacity,color,width,height,partname)
         image_data  = ""
         s2 = time.time()
-        # logging.info("python time == "+str((s2-s1)*1000))
+        logging.info("python time == "+str((s2-s1)*1000))
         # if not image_data:
         #     image_data = message
         self.write_message(mask)
@@ -53,8 +57,8 @@ def main():
     tornado.options.parse_command_line()
     
     ssl_ctx = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
-    ssl_ctx.load_cert_chain("/etc/letsencrypt/live/krishnovate.tech/fullchain.pem",
-                        "/etc/letsencrypt/live/krishnovate.tech/privkey.pem")
+    ssl_ctx.load_cert_chain("/home/crazy/virtualmakeupassistant/private/fullchain.pem",
+                        "/home/crazy/virtualmakeupassistant/private/privkey.pem")
     http_server = tornado.httpserver.HTTPServer(tornado.web.Application(MainHandler.route_urls()), ssl_options=ssl_ctx)
 
 

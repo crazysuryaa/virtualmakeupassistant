@@ -156,18 +156,18 @@
 
 <script>
     var colors, x, name;
-    console.log("index.html")
+    //console.log("index.html")
     let index = 0
     const imagecontainer = document.getElementById("imagecontainer")
     function Panel(clickedid) {
 
 
-        console.log(clickedid)
+      //  console.log(clickedid)
         callpost(clickedid)
     }
     function callpost(inputname) {
         name = inputname
-        console.log("callpost")
+    //    console.log("callpost")
         document.getElementById("imagecontainer").style.display = "block"
         colors = []
         x = ""
@@ -176,12 +176,12 @@
             // url:'/subclass/{{liplist.1.name}}',
             url: '/subclass/' + selectedpage + "/" + name,
             success: function (response) {
-                console.log("sfahjk")
+                //console.log("sfahjk")
                 const object = response.object
-                console.log(object)
-                console.log(object[0].name)
+                //console.log(object)
+                //console.log(object[0].name)
                 const imgurl = object[0].image
-                console.log(object[0].colors)
+             	//console.log(object[0].colors)
 
                 for (const [key, value] of Object.entries(object[0].colors)) {
                     colors.push(value.colorcode)
@@ -210,7 +210,7 @@
                                             </div>`
             },
             error: function (error) {
-                console.log(error)
+                //console.log(error)
             }
 
         })
@@ -223,22 +223,15 @@
     var selectedcolorcode = "none"
     function onColourClick(code) {
         partname = name
-        console.log("color clicked", code)
+       // console.log("color clicked", code)
         selectedcolorcode = code;
     }
     var video_width = 300;
     var video_height = 400;
 
-    var socket
-    
-    try{    
-    var ws = new WebSocket("wss://www.krishnovate.tech:12345/echo");
-    // var ws = new WebSocket("wss://www.asypher.tech:12345/echo");
-    }
-    catch
-    {
-        new WebSocket('ws://localhost:8099/websocket')
-    }
+       
+    var socket = new WebSocket("wss://www.krishnovate.tech:12345/echo");
+ 
     function isMobile() {
         const isAndroid = /Android/i.test(navigator.userAgent);
         const isiOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
@@ -346,20 +339,22 @@
                         }
                     }
 
-                    console.log("sending code", selectedcolorcode)
+                    //console.log("sending code", selectedcolorcode)
 
                     if(partname!= "")
                     {partcolorsdic[partname] = selectedcolorcode
-                    console.log("name=== " , partname)
-                    console.log(partcolorsdic)
+                   // console.log("name=== " , partname)
+                  //  console.log(partcolorsdic)
                     }
-                    data = canvas.toDataURL('image/jpeg')
+             	var t1 = "on send"
+		console.time(t1)
+		//data = canvas.toDataURL('image/jpeg',0.5)
                     ctx.drawImage(image, 0, 0, video_width, video_height);
-
+		console.timeEnd(t1)
                     try {
 
                         sendMessage(JSON.stringify({
-                            'image': data,
+                           'image': "data",
                             'keypoints': keypoints,
                             'color': selectedcolorcode,
                             'opacity': 0.5,
@@ -374,7 +369,7 @@
                         ctx.drawImage(
                             video, 0, 0, videoWidth, videoHeight, 0, 0, canvas.width, canvas.height);
                     }
-
+			//console.timeEnd(t1)
 
                     socket.onmessage = function (e) {
                         var t = "on message"

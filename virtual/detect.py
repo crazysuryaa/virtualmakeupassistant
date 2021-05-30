@@ -34,29 +34,31 @@ def base64_encode(data):
 
 
 def applyfilteronimage(image,keypoints,opacity,color,width,height,partsdic):
-    nparr = np.fromstring(base64_decode(image), np.uint8)
-    img1 = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-    img1  = cv2.cvtColor(img1,cv2.COLOR_RGB2BGR)
+#    nparr = np.fromstring(base64_decode(image), np.uint8)
+ #   img1 = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+  #  img1  = cv2.cvtColor(img1,cv2.COLOR_RGB2BGR)
     keys= list(partsdic.keys())
     values = list(partsdic.values())
+    mask = np.zeros((width,height,3) ,dtype = np.uint8)
     for i,value in enumerate(values):
         if value != "none":
             R,G,B = ImageColor.getcolor(value, "RGB")
             # logging.info("partname ============  "+str(keys[i]))
-            mask = np.zeros(img1.shape ,dtype = np.uint8)
+    #        mask = np.zeros((width,height,3) ,dtype = np.uint8)
             mask  = makepartmask(mask,keypoints ,keys[i])
-            mask = cv2.flip(mask, 1)
-            img2  = np.full(img1.shape, (R,G,B) , dtype= np.uint8)
-            colormask = cv2.bitwise_and(mask, img2)
-            blurred_img = cv2.GaussianBlur(colormask, (7, 7), 10)
-            img1 = cv2.addWeighted(img1, 1, blurred_img, 0.4, 0)
+    #        mask = cv2.flip(mask, 1)
+            img2  = np.full((width,height,3), (R,G,B) , dtype= np.uint8)
+            mask = cv2.bitwise_and(mask, img2)
+            mask = cv2.GaussianBlur(mask, (7, 7), 10)
+     #       img1 = cv2.addWeighted(img1, 1, blurred_img, 0.4, 0)
 
             # img1[mask!=0] = img2[mask!=0]*0.3+0.7*img1[mask!=0]
             # alpha = 0.8
             # img1[mask != 0] = img2[mask != 0] * (1-alpha) + alpha * img1[mask != 0]
-    img1 = cv2.flip(img1,1)
+    #img1 = cv2.flip(img1,1)
+    mask = cv2.flip(mask,1)
     buffer = BytesIO()
-    img = Image.fromarray(img1)
+    img = Image.fromarray(mask)
     # img = img.convert("rgb")
     img.save(buffer, format="jpeg")
     encoded_string = base64.b64encode(buffer.getvalue())
