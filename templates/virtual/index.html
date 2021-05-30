@@ -307,60 +307,63 @@
         "LowerLashline": "none",
         "EyeBrows": "none"
     }
+    var loopcounter = 0;
+    var imagereceived = 0
     async function renderPrediction() {
         var rendertime = "each render";
+        loopcounter += 1;
 
-        const predictions = await model.estimateFaces(video);
-        if (selectedcolorcode == "none") {
-            ctx.drawImage(
-                video, 0, 0, videoWidth, videoHeight, 0, 0, canvas.width, canvas.height);
-        }
-        if (selectedcolorcode != "none") {
-            ctx.drawImage(
-                video, 0, 0, videoWidth, videoHeight, 0, 0, canvas.width, canvas.height);
+        if (loopcounter % 3) {
+            const predictions = await model.estimateFaces(video);
+            if (selectedcolorcode == "none") {
+                ctx.drawImage(
+                    video, 0, 0, videoWidth, videoHeight, 0, 0, canvas.width, canvas.height);
+            }
+            if (selectedcolorcode != "none") {
+                if (imagereceived != 0) {
+                    ctx.drawImage(
+                        video, 0, 0, videoWidth, videoHeight, 0, 0, canvas.width, canvas.height);
+                }
+                if (predictions.length > 0) {
+                    predictions.forEach(prediction => {
+                        const keypoints = prediction.scaledMesh;
+                        if (facemeshplot) {
+                            if (triangulateMesh) {
+                                for (let i = 0; i < TRIANGULATION.length / 3; i++) {
+                                    const points = [
+                                        TRIANGULATION[i * 3], TRIANGULATION[i * 3 + 1],
+                                        TRIANGULATION[i * 3 + 2]
+                                    ].map(index => keypoints[index]);
 
-            if (predictions.length > 0) {
-                predictions.forEach(prediction => {
-                    const keypoints = prediction.scaledMesh;
-                    if (facemeshplot) {
-                        if (triangulateMesh) {
-                            for (let i = 0; i < TRIANGULATION.length / 3; i++) {
-                                const points = [
-                                    TRIANGULATION[i * 3], TRIANGULATION[i * 3 + 1],
-                                    TRIANGULATION[i * 3 + 2]
-                                ].map(index => keypoints[index]);
+                                    drawPath(ctx, points, true);
+                                }
+                            }
+                            else {
+                                for (let i = 0; i < keypoints.length; i++) {
+                                    const x = keypoints[i][0];
+                                    const y = keypoints[i][1];
 
-                                drawPath(ctx, points, true);
+                                    ctx.beginPath();
+                                    ctx.arc(x, y, 1 /* radius */, 0, 2 * Math.PI);
+                                    ctx.fill();
+                                }
                             }
                         }
-                        else {
-                            for (let i = 0; i < keypoints.length; i++) {
-                                const x = keypoints[i][0];
-                                const y = keypoints[i][1];
 
-                                ctx.beginPath();
-                                ctx.arc(x, y, 1 /* radius */, 0, 2 * Math.PI);
-                                ctx.fill();
-                            }
+                        //console.log("sending code", selectedcolorcode)
+
+                        if (partname != "") {
+                            partcolorsdic[partname] = selectedcolorcode
+                            // console.log("name=== " , partname)
+                            //  console.log(partcolorsdic)
                         }
-                    }
-
-                    //console.log("sending code", selectedcolorcode)
-
-                    if (partname != "") {
-                        partcolorsdic[partname] = selectedcolorcode
-                        // console.log("name=== " , partname)
-                        //  console.log(partcolorsdic)
-                    }
-                    var t1 = "on send"
-                    // console.time(t1)
-                    //data = canvas.toDataURL('image/jpeg',0.5)
-                    // ctx.drawImage(image, 0, 0, video_width, video_height);
-                    // console.timeEnd(t1)
-                    try {
-
+                        var t1 = "on send"
+                        // console.time(t1)
+                        data = canvas.toDataURL('image/jpeg', 0.5)
+                        // ctx.drawImage(image, 0, 0, video_width, video_height);
+                        console.time(t1)
                         sendMessage(JSON.stringify({
-                            'image': "data",
+                            'image': data,
                             'keypoints': keypoints,
                             'color': selectedcolorcode,
                             'opacity': 0.5,
@@ -368,58 +371,67 @@
                             'videoheight': video_height,
                             'part': partcolorsdic
                         }));
+                        console.timeEnd(t1)
 
-                        document.getElementById("output").style.display = "none"
-                        document.getElementById("opencvoutput").style.display = "block"
-                    }
-                    catch (err) {
-                        document.getElementById("output").style.display = "block"
-                        document.getElementById("opencvoutput").style.display = "none"
+                        socket.onmessage = function (e) {
+                            image.onload = function () {
+                                var t = "on message"
+                                console.time(t)
+                                
+                                if (loopcounter % 3) {
+                                    ctx.drawImage(image, 0, 0, video_width, video_height);
+                                }
+                                imagereceived = 1
+                                // let maskData = draw_context.getImageData(0, 0, canvas.width, canvas.height);
+                                // let masksrc = cv.matFromImageData(maskData);
 
-                        document.getElementById("errorblock").innerHTML = err.message;
-                        console.log("socket failed")
-                        ctx.drawImage(
-                            video, 0, 0, videoWidth, videoHeight, 0, 0, canvas.width, canvas.height);
-                    }
-                    //console.timeEnd(t1)
+                                // let imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                                // let imgsrc = cv.matFromImageData(imgData);
+                                // cv.addWeighted(imgsrc, 1, masksrc, 0.4, 0, masksrc);
+                                // // image.src = masksrc.data;
+                                // cv.imshow("opencvoutput", masksrc);
+                                // masksrc.delete();
+                                // imgsrc.delete();
+                                console.timeEnd(t)
 
-                    socket.onmessage = function (e) {
-                        var t = "on message"
-                        // console.time(t)
-                        image.onload = function () {
-                            draw_context.drawImage(image, 0, 0, video_width, video_height);
-                            let maskData = draw_context.getImageData(0, 0, canvas.width, canvas.height);
-                            let masksrc = cv.matFromImageData(maskData);
 
-                            let imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                            let imgsrc = cv.matFromImageData(imgData);
-                            cv.addWeighted(imgsrc, 1, masksrc, 0.4, 0, masksrc);
-                            // image.src = masksrc.data;
-                            cv.imshow("opencvoutput", masksrc);
-                            masksrc.delete(); 
-                            imgsrc.delete();
+                            };
+
+                            image.src = e.data;
 
 
                         };
-                        // console.timeEnd(t)
-                        image.src = e.data;
-
-
-                    };
+                    }
+                    );
                 }
-                );
+
             }
-
         }
-
         requestAnimationFrame(renderPrediction);
+        // var refreshId = setInterval(function () {
+        //     requestAnimationFrame(renderPrediction);
+        // }, 15);
         //console.timeEnd(rendertime);
     };
 
     document.getElementById("detect").style.display = "none"
     function sendMessage(message) {
         // //console.log(message);
-        socket.send(message);
+        try {
+            document.getElementById("output").style.display = "none"
+            document.getElementById("opencvoutput").style.display = "block"
+            socket.send(message);
+
+        }
+        catch (err) {
+            document.getElementById("output").style.display = "block"
+            document.getElementById("opencvoutput").style.display = "none"
+
+            document.getElementById("errorblock").innerHTML = err.message;
+            console.log("socket failed")
+            ctx.drawImage(
+                video, 0, 0, videoWidth, videoHeight, 0, 0, canvas.width, canvas.height);
+        }
     }
 
     async function main() {

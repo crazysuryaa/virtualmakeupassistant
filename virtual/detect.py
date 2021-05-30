@@ -34,9 +34,9 @@ def base64_encode(data):
 
 
 def applyfilteronimage(image,keypoints,opacity,color,width,height,partsdic):
-#    nparr = np.fromstring(base64_decode(image), np.uint8)
- #   img1 = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-  #  img1  = cv2.cvtColor(img1,cv2.COLOR_RGB2BGR)
+    nparr = np.fromstring(base64_decode(image), np.uint8)
+    img1 = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+    img1  = cv2.cvtColor(img1,cv2.COLOR_RGB2BGR)
     keys= list(partsdic.keys())
     values = list(partsdic.values())
     mask = np.zeros((height,width,3) ,dtype = np.uint8)
@@ -57,8 +57,12 @@ def applyfilteronimage(image,keypoints,opacity,color,width,height,partsdic):
             # img1[mask != 0] = img2[mask != 0] * (1-alpha) + alpha * img1[mask != 0]
     #img1 = cv2.flip(img1,1)
     mask = cv2.flip(mask,1)
+    img1 = cv2.addWeighted(img1, 1, mask, 0.4, 0)
+    img1 = cv2.flip(img1,1)
     buffer = BytesIO()
-    img = Image.fromarray(mask)
+    # img = Image.fromarray(mask)
+    img = Image.fromarray(img1)
+
     # img = img.convert("rgb")
     img.save(buffer, format="jpeg")
     encoded_string = base64.b64encode(buffer.getvalue())
