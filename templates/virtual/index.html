@@ -396,7 +396,8 @@
                             cv.addWeighted(imgsrc, 1, masksrc, 0.4, 0, masksrc);
                             // image.src = masksrc.data;
                             cv.imshow("opencvoutput", masksrc);
-                            maskData.delete(); masksrc.delete(); imgData.delete(); imgsrc.delete();
+                            masksrc.delete(); 
+                            imgsrc.delete();
 
 
                         };
