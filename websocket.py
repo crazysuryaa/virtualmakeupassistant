@@ -16,10 +16,11 @@ import json,re
 
 define("port", default=8099, help="run on the given port", type=int)
 
-
-
+counter = 0
+mask = []
 partcolorsdic = {'Crease': 'none', 'LowerLashline': 'none', 'EyeBrows': 'none', 'LipStick': 'none'}
 class MainHandler(tornado.websocket.WebSocketHandler):
+
     def check_origin(self, origin):
         return True
 
@@ -30,6 +31,8 @@ class MainHandler(tornado.websocket.WebSocketHandler):
         logging.info("A client disconnected")
 
     def on_message(self, message):
+        global mask , counter
+
         s1 = time.time()
         mess = json.loads(message)
         rgbimage = mess["image"]
@@ -43,10 +46,16 @@ class MainHandler(tornado.websocket.WebSocketHandler):
         # partcolorsdic[partname] = color
         # mask = applyfilter(mess["keypoints"])
         # logging.info(partname)
-        mask = applyfilteronimage(rgbimage,mess["keypoints"],opacity,color,width,height,partname)
+        if counter == 0:
+            mask = rgbimage
+        elif counter%2:
+            mask = mask
+        else:
+            mask = applyfilteronimage(rgbimage,mess["keypoints"],opacity,color,width,height,partname)            
         image_data  = ""
         s2 = time.time()
-        # logging.info("python time == "+str((s2-s1)*1000))
+        logging.info("python time == "+str((s2-s1)*1000))
+        counter+=1
         # if not image_data:
         #     image_data = message
         self.write_message(mask)

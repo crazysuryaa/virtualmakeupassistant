@@ -13,7 +13,8 @@ from virtual.detect import applyfilter, applyfilteronimage
 import time
 import json,re
 import ssl
-
+mask = []
+counter = 0
 define("port", default=12345, help="run on the given port", type=int)
 partcolorsdic = {'Crease': 'none', 'LowerLashline': 'none', 'EyeBrows': 'none', 'LipStick': 'none'}
 class MainHandler(tornado.websocket.WebSocketHandler):
@@ -29,8 +30,9 @@ class MainHandler(tornado.websocket.WebSocketHandler):
 
     def on_close(self):
         logging.info("A client disconnected")
-
     def on_message(self, message):
+        global mask , counter
+
         s1 = time.time()
         mess = json.loads(message)
         rgbimage = mess["image"]
@@ -44,13 +46,20 @@ class MainHandler(tornado.websocket.WebSocketHandler):
         # partcolorsdic[partname] = color
         # mask = applyfilter(mess["keypoints"])
         # logging.info(partname)
-        mask = applyfilteronimage(rgbimage,mess["keypoints"],opacity,color,width,height,partname)
+        if counter == 0:
+            mask = rgbimage
+        elif counter%2:
+            mask = mask
+        else:
+            mask = applyfilteronimage(rgbimage,mess["keypoints"],opacity,color,width,height,partname)            
         image_data  = ""
         s2 = time.time()
         logging.info("python time == "+str((s2-s1)*1000))
+        counter+=1
         # if not image_data:
         #     image_data = message
         self.write_message(mask)
+
 
 def main():
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "liveface.settings")
