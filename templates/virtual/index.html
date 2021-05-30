@@ -320,10 +320,10 @@
                     video, 0, 0, videoWidth, videoHeight, 0, 0, canvas.width, canvas.height);
             }
             if (selectedcolorcode != "none") {
-                if (imagereceived != 0) {
+                // if (imagereceived != 0) {
                     ctx.drawImage(
                         video, 0, 0, videoWidth, videoHeight, 0, 0, canvas.width, canvas.height);
-                }
+                // }
                 if (predictions.length > 0) {
                     predictions.forEach(prediction => {
                         const keypoints = prediction.scaledMesh;
@@ -378,9 +378,9 @@
                                 var t = "on message"
                                 console.time(t)
                                 
-                                if (loopcounter % 3) {
+                                // if (loopcounter % 3) {
                                     ctx.drawImage(image, 0, 0, video_width, video_height);
-                                }
+                                // }
                                 imagereceived = 1
                                 // let maskData = draw_context.getImageData(0, 0, canvas.width, canvas.height);
                                 // let masksrc = cv.matFromImageData(maskData);
