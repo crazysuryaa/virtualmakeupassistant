@@ -70,15 +70,15 @@ def makepartmask(mask, keypoints, partname):
   else:
     listloop = ["left"+partname , "right"+partname]
 
-  for part in listloop:
+  for i in range(2):
     temp = []
-    outer = part+"Outer"
-    inner = part+"Inner"
+    outer = listloop[i]+"Outer"
+    inner = listloop[i]+"Inner"
     chk = []
-
-    for index in annotations_dic[outer]:
-      x =int(keypoints[index][0])
-      y = int(keypoints[index][1])
+    diclist = annotations_dic[outer]
+    for index in range(len(diclist)):
+      x =int(keypoints[diclist[index]][0])
+      y = int(keypoints[diclist[index]][1])
       temp.append((x,y))
     chk.extend(temp)
     temp = []

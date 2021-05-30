@@ -43,13 +43,11 @@ def applyfilteronimage(image,keypoints,opacity,color,width,height,partsdic):
     for i,value in enumerate(values):
         if value != "none":
             R,G,B = ImageColor.getcolor(value, "RGB")
-            # logging.info("partname ============  "+str(keys[i]))
-    #        mask = np.zeros((width,height,3) ,dtype = np.uint8)
             mask  = makepartmask(mask,keypoints ,keys[i])
-    #        mask = cv2.flip(mask, 1)
             img2  = np.full((height,width,3), (R,G,B) , dtype= np.uint8)
             mask = cv2.bitwise_and(mask, img2)
-            mask = cv2.GaussianBlur(mask, (7, 7), 10)
+            
+    mask = cv2.GaussianBlur(mask, (7, 7), 10)
      #       img1 = cv2.addWeighted(img1, 1, blurred_img, 0.4, 0)
 
             # img1[mask!=0] = img2[mask!=0]*0.3+0.7*img1[mask!=0]
