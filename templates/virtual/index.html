@@ -375,7 +375,7 @@
                     catch (err) {
                         document.getElementById("output").style.display = "block"
                         document.getElementById("opencvoutput").style.display = "none"
-                        
+
                         document.getElementById("errorblock").innerHTML = err.message;
                         console.log("socket failed")
                         ctx.drawImage(
@@ -388,19 +388,20 @@
                         // console.time(t)
                         image.onload = function () {
                             draw_context.drawImage(image, 0, 0, video_width, video_height);
+                            let maskData = draw_context.getImageData(0, 0, canvas.width, canvas.height);
+                            let masksrc = cv.matFromImageData(maskData);
+
+                            let imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                            let imgsrc = cv.matFromImageData(imgData);
+                            cv.addWeighted(imgsrc, 1, masksrc, 0.4, 0, masksrc);
+                            // image.src = masksrc.data;
+                            cv.imshow("opencvoutput", masksrc);
+                            maskData.delete(); masksrc.delete(); imgData.delete(); imgsrc.delete();
+
 
                         };
                         // console.timeEnd(t)
                         image.src = e.data;
-                        let maskData = draw_context.getImageData(0, 0, canvas.width, canvas.height);
-                        let masksrc = cv.matFromImageData(maskData);
-
-                        let imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                        let imgsrc = cv.matFromImageData(imgData);
-                        cv.addWeighted(imgsrc, 1, masksrc, 0.4, 0, masksrc);
-                        // image.src = masksrc.data;
-                        cv.imshow("opencvoutput",masksrc);
-                        maskData.delete() ; masksrc.delete();imgData.delete();imgsrc.delete();
 
 
                     };
