@@ -16,6 +16,7 @@
     <script
         src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-webgl@2.0.0-rc.4/dist/tf-backend-webgl.es2017.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/blazeface"></script>
+    <script async src="{% static 'extrafiles/opencv.js' %}" onload="onOpenCvReady();" type="text/javascript"></script>
 </head>
 <header>
     <div id="Header">
@@ -91,8 +92,9 @@
         </div>
         <div class="column">
             <div class="containervideo">
-                <canvas class = canvasobject id="output" height="400px" width="300px"></canvas>
-                <canvas class = canvasobject id="detect" height="400px" width="300px"></canvas>
+                <canvas class=canvasobject id="output" height="400px" width="300px"></canvas>
+                <canvas class=canvasobject id="detect" height="400px" width="300px"></canvas>
+                <canvas class=canvasobject id="opencvoutput" height="400px" width="300px"></canvas>
                 <video id="videoElement" playsinline style="
                         -webkit-transform: scaleX(-1);
                         transform: scaleX(-1);
@@ -114,6 +116,9 @@
 </html>
 
 <script>
+    function onOpenCvReady() {
+        console.log("loaded")
+    }
 
     var lipspage = document.getElementById("lipspage");
     var eyespage = document.getElementById("eyespage");
@@ -162,12 +167,12 @@
     function Panel(clickedid) {
 
 
-      //  console.log(clickedid)
+        //  console.log(clickedid)
         callpost(clickedid)
     }
     function callpost(inputname) {
         name = inputname
-    //    console.log("callpost")
+        //    console.log("callpost")
         document.getElementById("imagecontainer").style.display = "block"
         colors = []
         x = ""
@@ -181,7 +186,7 @@
                 //console.log(object)
                 //console.log(object[0].name)
                 const imgurl = object[0].image
-             	//console.log(object[0].colors)
+                //console.log(object[0].colors)
 
                 for (const [key, value] of Object.entries(object[0].colors)) {
                     colors.push(value.colorcode)
@@ -219,19 +224,20 @@
 
 
 <script>
-    var partname ;
+    var partname;
     var selectedcolorcode = "none"
     function onColourClick(code) {
         partname = name
-       // console.log("color clicked", code)
+        // console.log("color clicked", code)
         selectedcolorcode = code;
     }
     var video_width = 300;
     var video_height = 400;
 
-       
+
     var socket = new WebSocket("wss://www.krishnovate.tech:12345/echo");
- 
+    // var socket = new WebSocket('ws://localhost:8099/websocket')
+
     function isMobile() {
         const isAndroid = /Android/i.test(navigator.userAgent);
         const isiOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
@@ -296,14 +302,14 @@
     let image = new Image();
 
     var partcolorsdic = {
-        "lips":"none",
-        "Crease":"none",
-        "LowerLashline":"none",
-        "EyeBrows":"none"
+        "lips": "none",
+        "Crease": "none",
+        "LowerLashline": "none",
+        "EyeBrows": "none"
     }
     async function renderPrediction() {
         var rendertime = "each render";
-        
+
         const predictions = await model.estimateFaces(video);
         if (selectedcolorcode == "none") {
             ctx.drawImage(
@@ -341,20 +347,20 @@
 
                     //console.log("sending code", selectedcolorcode)
 
-                    if(partname!= "")
-                    {partcolorsdic[partname] = selectedcolorcode
-                   // console.log("name=== " , partname)
-                  //  console.log(partcolorsdic)
+                    if (partname != "") {
+                        partcolorsdic[partname] = selectedcolorcode
+                        // console.log("name=== " , partname)
+                        //  console.log(partcolorsdic)
                     }
-             	var t1 = "on send"
-		console.time(t1)
-		//data = canvas.toDataURL('image/jpeg',0.5)
-                    ctx.drawImage(image, 0, 0, video_width, video_height);
-		console.timeEnd(t1)
+                    var t1 = "on send"
+                    // console.time(t1)
+                    //data = canvas.toDataURL('image/jpeg',0.5)
+                    // ctx.drawImage(image, 0, 0, video_width, video_height);
+                    // console.timeEnd(t1)
                     try {
 
                         sendMessage(JSON.stringify({
-                           'image': "data",
+                            'image': "data",
                             'keypoints': keypoints,
                             'color': selectedcolorcode,
                             'opacity': 0.5,
@@ -362,25 +368,40 @@
                             'videoheight': video_height,
                             'part': partcolorsdic
                         }));
+
+                        document.getElementById("output").style.display = "none"
+                        document.getElementById("opencvoutput").style.display = "block"
                     }
                     catch (err) {
+                        document.getElementById("output").style.display = "block"
+                        document.getElementById("opencvoutput").style.display = "none"
+                        
                         document.getElementById("errorblock").innerHTML = err.message;
-                        console.log("socket failed")            
+                        console.log("socket failed")
                         ctx.drawImage(
                             video, 0, 0, videoWidth, videoHeight, 0, 0, canvas.width, canvas.height);
                     }
-			//console.timeEnd(t1)
+                    //console.timeEnd(t1)
 
                     socket.onmessage = function (e) {
                         var t = "on message"
-                        console.time(t)
+                        // console.time(t)
                         image.onload = function () {
-                            ctx.drawImage(image, 0, 0, video_width, video_height);
+                            draw_context.drawImage(image, 0, 0, video_width, video_height);
 
                         };
-                        console.timeEnd(t)
+                        // console.timeEnd(t)
                         image.src = e.data;
-                        // drawCanvas();
+                        let maskData = draw_context.getImageData(0, 0, canvas.width, canvas.height);
+                        let masksrc = cv.matFromImageData(maskData);
+
+                        let imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                        let imgsrc = cv.matFromImageData(imgData);
+                        cv.addWeighted(imgsrc, 1, masksrc, 0.4, 0, masksrc);
+                        // image.src = masksrc.data;
+                        cv.imshow("opencvoutput",masksrc);
+                        maskData.delete() ; masksrc.delete();imgData.delete();imgsrc.delete();
+
 
                     };
                 }
@@ -393,7 +414,7 @@
         //console.timeEnd(rendertime);
     };
 
-
+    document.getElementById("detect").style.display = "none"
     function sendMessage(message) {
         // //console.log(message);
         socket.send(message);
@@ -471,7 +492,7 @@
         display: flex;
     }
 
-    .row.mainpage{
+    .row.mainpage {
         height: 600px;
     }
 
@@ -510,10 +531,12 @@
         display: inline-block;
         font-size: 20px;
     }
-    .card{
+
+    .card {
         margin-top: 20px;
         margin-bottom: 20px;
     }
+
     button.active>button {
         background-color: green;
     }
@@ -566,12 +589,12 @@
     }
 
     .containervideo {
-    padding: 5%;
-    width: 300px;
-    height: 400px;
-    margin-top: 100px;
-    display: inline-block;
-    background-color: darkslategray;
+        padding: 5%;
+        width: 300px;
+        height: 400px;
+        margin-top: 100px;
+        display: inline-block;
+        background-color: darkslategray;
     }
 
     @media only screen and (max-device-width: 1366px) {
@@ -580,53 +603,52 @@
             background-attachment: scroll;
         }
 
-        
-    .row.mainpage{
-        height: 1000px;
-    }
 
-    .MainHeader {
-        margin-top: 100px;
-    }
-    .canvasobject{
-        width: 620px;
-        height: 800px;
-        margin-right: 50px;
-    }
+        .row.mainpage {
+            height: 1000px;
+        }
 
-    .button{
-        font-size: 30px;
-    }
+        .MainHeader {
+            margin-top: 100px;
+        }
 
-    .subbutton{
-        font-size: 25px;
-    }
-    .containervideo
-    {
-        width: 450px;
-        height: 700px;
-    }
-    .card-img-top{
-        width:200px;
-        height: 350px;
-    }
+        .canvasobject {
+            width: 620px;
+            height: 800px;
+            margin-right: 50px;
+        }
 
-    .card-text
-    {
-        font-size: 25px;
-    }
+        .button {
+            font-size: 30px;
+        }
 
-    
-    .btn-circle.btn-sm {
-        width: 60px;
-        height: 60px;
-        padding: 7px 10px;
-        border-radius: 30px;
-        font-size: 8px;
-        text-align: center;
-    }
+        .subbutton {
+            font-size: 25px;
+        }
+
+        .containervideo {
+            width: 450px;
+            height: 700px;
+        }
+
+        .card-img-top {
+            width: 200px;
+            height: 350px;
+        }
+
+        .card-text {
+            font-size: 25px;
+        }
+
+
+        .btn-circle.btn-sm {
+            width: 60px;
+            height: 60px;
+            padding: 7px 10px;
+            border-radius: 30px;
+            font-size: 8px;
+            text-align: center;
+        }
 
     }
 </style>
-
-
