@@ -17,12 +17,14 @@
         src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-webgl@2.0.0-rc.4/dist/tf-backend-webgl.es2017.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/blazeface"></script>
     <script async src="{% static 'extrafiles/opencv.js' %}" onload="onOpenCvReady();" type="text/javascript"></script>
+    <script  src="{% static 'extrafiles/triangulation.js' %}"  type="text/javascript"></script>
 </head>
 <header>
     <div id="Header">
         <h1 class="MainHeader">
-            VIRTUAL MAKEUP ASSISTANT
+            ASYPHER VIRTUAL MAKEUP ASSISTANT
         </h1>
+        <button class="meshbutton" onClick="meshclicked()">Mesh</button>
     </div>
 </header>
 
@@ -91,6 +93,7 @@
             <div id="imagecontainer"></div>
         </div>
         <div class="column">
+            {% comment %} <button>Mesh</button> {% endcomment %}
             <div class="containervideo">
                 <canvas class=canvasobject id="output" height="400px" width="300px"></canvas>
                 <canvas class=canvasobject id="detect" height="400px" width="300px"></canvas>
@@ -104,6 +107,7 @@
                         ">
                 </video>
             </div>
+
             <div class="slidecontainer">
             <p>Opacity:</p>
             <input type="range" min="20" max="70" value="40" class="slider" id="opacityslider">
@@ -111,6 +115,7 @@
             <p id="errorblock"></p>
 
         </div>
+
     </div>
 </body>
 <footer class="parallax">
@@ -239,7 +244,7 @@
     var video_height = 400;
 
 
-    var socket = new WebSocket("wss://www.krishnovate.tech:12345/echo");
+    var socket = new WebSocket("wss://www.asypher.tech:12345/echo");
     {% comment %} var socket = new WebSocket('ws://localhost:8099/websocket') {% endcomment %}
 
     function isMobile() {
@@ -295,9 +300,10 @@
 
 
 
-    const triangulateMesh = false;
-    const facemeshplot = false;
-    var flip;
+    var triangulateMesh = false;
+    var facemeshplot = false;
+    var flip ;
+    var ismesh = false
     if (isMobile()) {
         flip = true;
     }
@@ -311,27 +317,35 @@
         "LowerLashline": "none",
         "EyeBrows": "none"
     }
+    function meshclicked()
+    {
+        console.log("meshclicked")
+        if(ismesh == false)
+        {
+            ismesh = true
+        }
+        else{
+            ismesh = false
+        }
+    }
+
     var loopcounter = 0;
     var imagereceived = 0
     async function renderPrediction() {
+        console.log(ismesh)
         var rendertime = "each render";
         loopcounter += 1;
 
         if (true) {
             const predictions = await model.estimateFaces(video);
-            if (selectedcolorcode == "none") {
-                ctx.drawImage(
-                    video, 0, 0, videoWidth, videoHeight, 0, 0, canvas.width, canvas.height);
-            }
-            if (selectedcolorcode != "none") {
-                // if (imagereceived != 0) {
-                    draw_context.drawImage(
-                        video, 0, 0, videoWidth, videoHeight);
-                // }
+            
+                if (ismesh == true) {
+                    triangulateMesh =  true
+                    ctx.drawImage(video, 0, 0, videoWidth, videoHeight, 0, 0, canvas.width, canvas.height);
                 if (predictions.length > 0) {
                     predictions.forEach(prediction => {
                         const keypoints = prediction.scaledMesh;
-                        if (facemeshplot) {
+                            console.log("plotting",ismesh)
                             if (triangulateMesh) {
                                 for (let i = 0; i < TRIANGULATION.length / 3; i++) {
                                     const points = [
@@ -352,57 +366,74 @@
                                     ctx.fill();
                                 }
                             }
-                        }
 
-                        //console.log("sending code", selectedcolorcode)
 
-                        if (partname != "") {
-                            partcolorsdic[partname] = selectedcolorcode
-                            // console.log("name=== " , partname)
-                            //  console.log(partcolorsdic)
-                        }
-                        var t1 = "on send"
-                        // console.time(t1)
-                        data = draw_canvas.toDataURL('image/jpeg', 0.5)
-                        // ctx.drawImage(image, 0, 0, video_width, video_height);
-                        {% comment %} console.time(t1) {% endcomment %}
-                        
+                        })};
+                }
 
-                        if(socket.readyState === WebSocket.OPEN)
-                        {
-                            var op = document.getElementById('opacityslider').value 
-                       //     console.log("h,w ==" , video_height ,video_width ,videoWidth, videoHeight,canvas.width, canvas.height , op)
-                            sendMessage(JSON.stringify({
-                            'image': data,
-                            'keypoints': keypoints,
-                            'color': selectedcolorcode,
-                            'opacity': op,
-                            'videowidth': video_width,
-                            'videoheight': video_height,
-                            'part': partcolorsdic
-                        }));
-                        }
-                        else{
-                            ctx.drawImage(video, 0, 0, videoWidth, videoHeight, 0, 0, canvas.width, canvas.height);
+            
+            
+            if (selectedcolorcode == "none" && ismesh == false)   {
+                ctx.drawImage(
+                    video, 0, 0, videoWidth, videoHeight, 0, 0, canvas.width, canvas.height);
+            }
 
-                        }
-                        {% comment %} console.timeEnd(t1) {% endcomment %}
+            if (selectedcolorcode != "none" && ismesh == false) {
+                // if (imagereceived != 0) {
+                    draw_context.drawImage(
+                        video, 0, 0, videoWidth, videoHeight);
+                // }
+                if (predictions.length > 0) {
+                    predictions.forEach(prediction => {
+                        const keypoints = prediction.scaledMesh;
+                            if (partname != "") {
+                                partcolorsdic[partname] = selectedcolorcode
+                                // console.log("name=== " , partname)
+                                //  console.log(partcolorsdic)
+                            }
+                            var t1 = "on send"
+                            // console.time(t1)
+                            data = draw_canvas.toDataURL('image/jpeg', 0.5)
+                            // ctx.drawImage(image, 0, 0, video_width, video_height);
+                            {% comment %} console.time(t1) {% endcomment %}
+                            
 
-                        socket.onmessage = function (e) {
-                            image.onload = function () {
-                                var t = "on message"
-                            //    console.time(t)
-                                ctx.drawImage(image, 0, 0,  videoWidth, videoHeight, 0, 0, canvas.width, canvas.height);
-                                imagereceived = 1
-                     //           console.timeEnd(t)
+                            if(socket.readyState === WebSocket.OPEN)
+                            {
+                                var op = document.getElementById('opacityslider').value 
+                            //     console.log("h,w ==" , video_height ,video_width ,videoWidth, videoHeight,canvas.width, canvas.height , op)
+                                sendMessage(JSON.stringify({
+                                'image': data,
+                                'keypoints': keypoints,
+                                'color': selectedcolorcode,
+                                'opacity': op,
+                                'videowidth': video_width,
+                                'videoheight': video_height,
+                                'part': partcolorsdic
+                            }));
+                            }
+                            else{
+                                ctx.drawImage(video, 0, 0, videoWidth, videoHeight, 0, 0, canvas.width, canvas.height);
+
+                            }
+                            {% comment %} console.timeEnd(t1) {% endcomment %}
+
+                            socket.onmessage = function (e) {
+                                image.onload = function () {
+                                    var t = "on message"
+                                //    console.time(t)
+                                    ctx.drawImage(image, 0, 0,  videoWidth, videoHeight, 0, 0, canvas.width, canvas.height);
+                                    imagereceived = 1
+                            //           console.timeEnd(t)
+
+
+                                };
+
+                                image.src = e.data;
 
 
                             };
-
-                            image.src = e.data;
-
-
-                        };
+                        
                     }
                     );
                 }
@@ -535,6 +566,21 @@
         font-size: 20px;
     }
 
+    .meshbutton {
+        background-color: white;
+        border: none;
+        color: black;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 20px;
+        overflow: auto;
+        white-space: nowrap;
+        margin-left:80%;
+
+    }
+
+
     .card {
         margin-top: 20px;
         margin-bottom: 20px;
@@ -567,6 +613,13 @@
     }
 
     .MainHeader {
+        text-align: left;
+        margin-left: 30px;
+        font-family: fantasy;
+        margin-top: 11px;
+    }
+
+        .Company {
         text-align: left;
         margin-left: 30px;
         font-family: fantasy;
