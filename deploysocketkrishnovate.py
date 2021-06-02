@@ -55,6 +55,7 @@ class MainHandler(tornado.websocket.WebSocketHandler):
         image_data  = ""
         s2 = time.time()
         logging.info("python time == "+str((s2-s1)*1000))
+        # logging.info("python time == "+str((s2-s1)*1000))
         counter+=1
         # if not image_data:
         #     image_data = message

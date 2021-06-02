@@ -236,7 +236,7 @@
 
 
     var socket = new WebSocket("wss://www.krishnovate.tech:12345/echo");
-    // var socket = new WebSocket('ws://localhost:8099/websocket')
+    {% comment %} var socket = new WebSocket('ws://localhost:8099/websocket') {% endcomment %}
 
     function isMobile() {
         const isAndroid = /Android/i.test(navigator.userAgent);
@@ -313,7 +313,7 @@
         var rendertime = "each render";
         loopcounter += 1;
 
-        if (loopcounter % 3) {
+        if (true) {
             const predictions = await model.estimateFaces(video);
             if (selectedcolorcode == "none") {
                 ctx.drawImage(
@@ -362,6 +362,11 @@
                         data = draw_canvas.toDataURL('image/jpeg', 0.5)
                         // ctx.drawImage(image, 0, 0, video_width, video_height);
                         console.time(t1)
+                        if(isMobile())
+                        {
+                            'videowidth': 620,
+                            'videoheight': 800,                            
+                        }
                         sendMessage(JSON.stringify({
                             'image': data,
                             'keypoints': keypoints,
