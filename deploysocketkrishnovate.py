@@ -36,7 +36,7 @@ class MainHandler(tornado.websocket.WebSocketHandler):
         s1 = time.time()
         mess = json.loads(message)
         rgbimage = mess["image"]
-        opacity = mess["opacity"]
+        opacity = int(mess["opacity"])
         color = mess["color"]
         width = mess["videowidth"]
         height = mess["videoheight"]
@@ -48,10 +48,10 @@ class MainHandler(tornado.websocket.WebSocketHandler):
         # logging.info(partname)
         if counter == 0:
             mask = rgbimage
-        elif counter%2:
-            mask = mask
+        elif counter%5  or counter == 1:
+            mask = applyfilteronimage(rgbimage,mess["keypoints"],opacity,color,width,height,partname) 
         else:
-            mask = applyfilteronimage(rgbimage,mess["keypoints"],opacity,color,width,height,partname)            
+            mask = mask  
         image_data  = ""
         s2 = time.time()
         logging.info("python time == "+str((s2-s1)*1000))
