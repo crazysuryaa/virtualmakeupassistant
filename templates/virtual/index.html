@@ -104,6 +104,10 @@
                         ">
                 </video>
             </div>
+            <div class="slidecontainer">
+            <p>Opacity:</p>
+            <input type="range" min="20" max="70" value="40" class="slider" id="opacityslider">
+            </div>
             <p id="errorblock"></p>
 
         </div>
@@ -276,8 +280,8 @@
             'audio': false,
             'video': {
                 facingMode: 'user',
-                width: mobile ? undefined : video_width,
-                height: mobile ? undefined : video_height
+                width: mobile ? video_width : video_width,
+                height: mobile ? video_height : video_height
             },
         });
         video.srcObject = stream;
@@ -322,7 +326,7 @@
             if (selectedcolorcode != "none") {
                 // if (imagereceived != 0) {
                     draw_context.drawImage(
-                        video, 0, 0, videoWidth, videoHeight, 0, 0, canvas.width, canvas.height);
+                        video, 0, 0, videoWidth, videoHeight);
                 // }
                 if (predictions.length > 0) {
                     predictions.forEach(prediction => {
@@ -361,43 +365,36 @@
                         // console.time(t1)
                         data = draw_canvas.toDataURL('image/jpeg', 0.5)
                         // ctx.drawImage(image, 0, 0, video_width, video_height);
-                        console.time(t1)
-                        if(isMobile())
+                        {% comment %} console.time(t1) {% endcomment %}
+                        
+
+                        if(socket.readyState === WebSocket.OPEN)
                         {
-                            'videowidth': 620,
-                            'videoheight': 800,                            
-                        }
-                        sendMessage(JSON.stringify({
+                            var op = document.getElementById('opacityslider').value 
+                       //     console.log("h,w ==" , video_height ,video_width ,videoWidth, videoHeight,canvas.width, canvas.height , op)
+                            sendMessage(JSON.stringify({
                             'image': data,
                             'keypoints': keypoints,
                             'color': selectedcolorcode,
-                            'opacity': 0.5,
+                            'opacity': op,
                             'videowidth': video_width,
                             'videoheight': video_height,
                             'part': partcolorsdic
                         }));
-                        console.timeEnd(t1)
+                        }
+                        else{
+                            ctx.drawImage(video, 0, 0, videoWidth, videoHeight, 0, 0, canvas.width, canvas.height);
+
+                        }
+                        {% comment %} console.timeEnd(t1) {% endcomment %}
 
                         socket.onmessage = function (e) {
                             image.onload = function () {
                                 var t = "on message"
-                                console.time(t)
-                                
-                                // if (loopcounter % 3) {
-                                    ctx.drawImage(image, 0, 0, video_width, video_height);
-                                // }
+                            //    console.time(t)
+                                ctx.drawImage(image, 0, 0,  videoWidth, videoHeight, 0, 0, canvas.width, canvas.height);
                                 imagereceived = 1
-                                // let maskData = draw_context.getImageData(0, 0, canvas.width, canvas.height);
-                                // let masksrc = cv.matFromImageData(maskData);
-
-                                // let imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                                // let imgsrc = cv.matFromImageData(imgData);
-                                // cv.addWeighted(imgsrc, 1, masksrc, 0.4, 0, masksrc);
-                                // // image.src = masksrc.data;
-                                // cv.imshow("opencvoutput", masksrc);
-                                // masksrc.delete();
-                                // imgsrc.delete();
-                                console.timeEnd(t)
+                     //           console.timeEnd(t)
 
 
                             };
@@ -420,25 +417,12 @@
     };
 
     document.getElementById("detect").style.display = "none"
-    function sendMessage(message) {
-        // //console.log(message);
-        try {
+    function sendMessage(message) 
+    {
             document.getElementById("output").style.display = "none"
             document.getElementById("opencvoutput").style.display = "block"
             socket.send(message);
-
-        }
-        catch (err) {
-            document.getElementById("output").style.display = "block"
-            document.getElementById("opencvoutput").style.display = "none"
-
-            document.getElementById("errorblock").innerHTML = err.message;
-            console.log("socket failed")
-            ctx.drawImage(
-                video, 0, 0, videoWidth, videoHeight, 0, 0, canvas.width, canvas.height);
-        }
-    }
-
+    };
     async function main() {
         await tf.setBackend(state.backend);
         await setupCamera();
@@ -616,6 +600,43 @@
         background-color: darkslategray;
     }
 
+        .slidecontainer {
+    width: 300px;
+    margin:30px;
+    margin-top : 50px;
+    }
+
+    .slider {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 25px;
+    background: #d3d3d3;
+    outline: none;
+    opacity: 0.7;
+    -webkit-transition: .2s;
+    transition: opacity .2s;
+    }
+
+    .slider:hover {
+    opacity: 1;
+    }
+
+    .slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 25px;
+    height: 25px;
+    background: #04AA6D;
+    cursor: pointer;
+    }
+
+    .slider::-moz-range-thumb {
+    width: 25px;
+    height: 25px;
+    background: #04AA6D;
+    cursor: pointer;
+    }
+
     @media only screen and (max-device-width: 1366px) {
         .parallax {
             height: 50%;
@@ -668,6 +689,12 @@
             font-size: 8px;
             text-align: center;
         }
+
+        
+        .slidecontainer {
+    width: 400px;
+    margin-top:100px;
+    }
 
     }
 </style>
